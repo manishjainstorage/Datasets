@@ -1,0 +1,61 @@
+Sales Person,Month,Quarter,Sales,Region,Promotion,Incentive ,ID
+ John ,Apr,Q2,"$15,289 ",South,FALSE,4711,JO123
+ Pater ,Apr,Q2,"$48,709 ",FALSErth,TRUE,9862,PT123
+ Johnsy ,Apr,Q2,"$26,026 ",East,FALSE,1372,JOH12
+ Ricky ,Apr,Q2,"$34,583 ",West,TRUE,6806,RI123
+ Thomas ,Apr,Q2,"$14,647 ",South,FALSE,4560,
+ John ,Aug,Q3,"$39,225 ",South,TRUE,7023,JO123
+ Pater ,,Q3,"$12,638 ",East,FALSE,3765,PT123
+ Johnsy ,Aug,Q3,"$31,678 ",South,TRUE,6567,
+ Ricky ,Aug,Q3,"$30,094 ",East,TRUE,6166,
+ Thomas ,Aug,Q3,"$10,864 ",East,FALSE,1088,
+ John ,,Q4,"$42,473 ",East,TRUE,9945,
+ Pater ,Dec,Q4,"$28,526 ",South,FALSE,2078,
+ Johnsy ,Dec,Q4,,FALSErth,,9656,
+ Ricky ,Dec,Q4,"$32,681 ",East,TRUE,8668,
+ Thomas ,Dec,Q4,"$23,238 ",South,FALSE,3640,TH123
+ John ,Feb,Q1,"$10,844 ",East,FALSE,1900,JO123
+ Pater ,Feb,Q1,"$47,933 ",FALSErth,TRUE,9473,PT123
+ Johnsy ,Feb,Q1,"$54,047 ",FALSErth,TRUE,8953,JOH12
+ Ricky ,Feb,Q1,"$23,500 ",East,FALSE,2106,RI123
+ Thomas ,Feb,Q1,"$17,542 ",FALSErth,FALSE,1379,TH123
+ John ,Jan,Q1,"$15,039 ",West,,1246,JO123
+ Pater ,Jan,Q1,"$27,653 ",West,FALSE,4458,PT123
+ Johnsy ,Jan,Q1,"$30,577 ",FALSErth,TRUE,9708,JOH12
+ Ricky ,Jan,Q1,,,TRUE,9281,RI123
+ Thomas ,Jan,Q1,,,TRUE,6663,TH123
+ John ,Jul,Q3,,,TRUE,6787,JO123
+ Pater ,Jul,Q3,,,FALSE,4811,PT123
+ Johnsy ,Jul,Q3,"$36,986 ",West,TRUE,8155,JOH12
+ Ricky ,Jul,Q3,"$38,339 ",South,TRUE,9693,RI123
+ Thomas ,Jul,Q3,"$44,645 ",South,TRUE,6853,TH123
+ John ,Jun,Q2,"$19,264 ",East,FALSE,2715,JO123
+ Pater ,Jun,Q2,"$49,907 ",South,TRUE,9800,PT123
+ Johnsy ,Jun,Q2,"$42,198 ",East,TRUE,6940,JOH12
+ Ricky ,Jun,Q2,"$50,208 ",East,TRUE,6153,RI123
+ Thomas ,Jun,Q2,"$29,706 ",East,FALSE,1624,TH123
+ John ,Mar,Q1,"$19,981 ",South,FALSE,3502,JO123
+ Pater ,Mar,Q1,"$21,831 ",FALSErth,FALSE,4812,PT123
+ Johnsy ,Mar,Q1,"$38,347 ",East,TRUE,7149,JOH12
+ Ricky ,Mar,Q1,"$45,462 ",South,TRUE,9654,RI123
+ Thomas ,Mar,Q1,"$16,335 ",East,FALSE,3365,TH123
+ John ,May,Q2,"$52,644 ",FALSErth,TRUE,9886,JO123
+ Pater ,May,Q2,"$35,897 ",FALSErth,TRUE,6074,PT123
+ Johnsy ,May,Q2,"$17,657 ",East,FALSE,1936,JOH12
+ Ricky ,May,Q2,"$45,086 ",FALSErth,TRUE,8122,RI123
+ Thomas ,May,Q2,"$32,090 ",West,TRUE,8332,TH123
+ John ,FALSEv,Q4,"$32,985 ",West,TRUE,8786,JO123
+ Pater ,FALSEv,Q4,"$37,550 ",FALSErth,TRUE,6944,PT123
+ Johnsy ,FALSEv,Q4,"$45,837 ",West,TRUE,8885,JOH12
+ Ricky ,FALSEv,Q4,"$22,928 ",South,FALSE,1268,RI123
+ Thomas ,FALSEv,Q4,"$33,165 ",FALSErth,TRUE,7958,TH123
+ John ,Oct,Q4,"$20,812 ",East,FALSE,3924,JO123
+ Pater ,Oct,Q4,"$19,120 ",West,FALSE,2505,PT123
+ Johnsy ,Oct,Q4,"$16,109 ",South,FALSE,3037,JOH12
+ Ricky ,Oct,Q4,"$22,120 ",South,FALSE,1185,RI123
+ Thomas ,Oct,Q4,"$11,070 ",East,FALSE,1896,TH123
+ John ,Sep,Q3,"$43,294 ",South,TRUE,7248,JO123
+ Pater ,Sep,Q3,"$31,155 ",East,TRUE,7500,PT123
+ Johnsy ,Sep,Q3,"$54,877 ",East,TRUE,9334,JOH12
+ Ricky ,Sep,Q3,"$41,903 ",East,TRUE,6934,RI123
+ Thomas ,Sep,Q3,"$19,376 ",South,FALSE,3241,TH123
