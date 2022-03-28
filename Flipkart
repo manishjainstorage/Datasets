@@ -1,0 +1,36 @@
+Print top five customers as per sales values.
+Print top 15 customers' names with higher sales and highest shipping cost.
+Print customer name who took maximum discounts.
+Print all customers starting from “A” where ship mode is “Express Air”
+Find the relation between shipping cost and ship mode.
+Find product category where shipping cost is very high and very low.
+What is the frequency of product container.
+Print total discount and total shipping cost by region wise.
+Print name of customer begin with vowels.
+Print which Product Sub-Category having lower shipping cost and maximum discount.
+Print all Product name which contains numerical values. containstrings
+Find product name with highest and lowest Product Base Margin.
+Print top 3 states with highest sales.
+Print top 3 city for highest discount and highest sales.
+Which location is top for supplying the product based on postal code.
+Print time series analysis graph for order date and shipping date.
+What is the minimum and maximum margin in between order date and shipping date.
+Print top 5 and least 5 product name as profit wise.
+Find relation between OrderID and city.
+Print all sales values without decimal number.
+Print all State or Province starting with “M” and City name starting with “N”
+Print average profit according to city.
+Print average sales as per country wise.
+Print all customer names which contain any alphabet in the field (Before and After the Space). Ex: Gwendolyn F Tyson
+Print top 3 orders as per order ID
+Print all city names which contain only 4 characters.
+Print all city names where one alphabet repeat atleast two times.(no case) Ex-Oregon,Arizona
+Print all city names where first and last character is same. Ex:Arizona
+Print all rows where order date and shipping date is same.
+Print all values from profit column which contains minimum 4 numbers after decimal.
+
+
+
+
+
+
