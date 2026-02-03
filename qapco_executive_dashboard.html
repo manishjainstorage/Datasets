@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QAPCO MoC Executive Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a4d8f;
+            --secondary: #2d6cb5;
+            --accent: #ff6b35;
+            --success: #06d6a0;
+            --warning: #ffd60a;
+            --danger: #ef476f;
+            --dark: #0f1419;
+            --light: #f8f9fa;
+            --border: #e0e5eb;
+            --shadow: rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 4px 20px rgba(26, 77, 143, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            font-weight: 300;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.8rem;
+            box-shadow: 0 2px 12px var(--shadow);
+            border-left: 4px solid var(--primary);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(26, 77, 143, 0.05) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(30%, -30%);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        .metric-card.danger { border-left-color: var(--danger); }
+        .metric-card.warning { border-left-color: var(--warning); }
+        .metric-card.success { border-left-color: var(--success); }
+        .metric-card.accent { border-left-color: var(--accent); }
+
+        .metric-label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #6c757d;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--dark);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .metric-subtitle {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 2px 12px var(--shadow);
+            position: relative;
+        }
+
+        .chart-card.full { grid-column: span 12; }
+        .chart-card.half { grid-column: span 6; }
+        .chart-card.third { grid-column: span 4; }
+
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(180deg, var(--primary), var(--secondary));
+            border-radius: 2px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        thead {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tbody tr {
+            transition: background-color 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-high { background: #fee; color: var(--danger); }
+        .badge-medium { background: #fff8e1; color: #f57c00; }
+        .badge-low { background: #e8f5e9; color: #2e7d32; }
+        .badge-critical { background: var(--danger); color: white; }
+        .badge-approved { background: var(--success); color: white; }
+        .badge-pending { background: var(--warning); color: var(--dark); }
+        .badge-cancelled { background: #ccc; color: #555; }
+        .badge-halt { background: var(--accent); color: white; }
+
+        .filter-bar {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 12px var(--shadow);
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-bar select, .filter-bar input {
+            padding: 0.7rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .filter-bar select:focus, .filter-bar input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        .decision-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .decision-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 16px var(--shadow);
+        }
+
+        .decision-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .decision-title {
+            font-weight: 700;
+            color: var(--dark);
+            font-size: 1.1rem;
+        }
+
+        .decision-body {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .decision-metric {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .decision-metric-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #6c757d;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+
+        .decision-metric-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--dark);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .tab {
+            padding: 1rem 2rem;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            color: #6c757d;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab:hover {
+            color: var(--secondary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .cost-highlight {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe5a1 100%);
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .risk-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .risk-indicator.critical {
+            background: var(--danger);
+            color: white;
+        }
+
+        .risk-indicator.high {
+            background: #ff9800;
+            color: white;
+        }
+
+        .risk-indicator.medium {
+            background: #ffeb3b;
+            color: var(--dark);
+        }
+
+        .risk-indicator.low {
+            background: var(--success);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .chart-card.half, .chart-card.third {
+                grid-column: span 12;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .decision-body {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, var(--success) 0%, #04b589 100%);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            margin-left: auto;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+
+        .chart-wrapper.small {
+            height: 300px;
+        }
+
+        .value-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>QAPCO Management of Change Dashboard</h1>
+            <p>Executive Summary - February 2024 | Comprehensive MoC Analysis & Decision Support</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Key Metrics -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Total Projects</div>
+                <div class="metric-value" id="totalProjects">25</div>
+                <div class="metric-subtitle">Active MoC Notifications</div>
+            </div>
+            <div class="metric-card danger">
+                <div class="metric-label">High Risk Projects</div>
+                <div class="metric-value" id="highRiskCount">12</div>
+                <div class="metric-subtitle">Requiring Immediate Attention</div>
+            </div>
+            <div class="metric-card success">
+                <div class="metric-label">Total Budget (QAR)</div>
+                <div class="metric-value" id="totalBudget">43.7M</div>
+                <div class="metric-subtitle">Approved Modifications</div>
+            </div>
+            <div class="metric-card accent">
+                <div class="metric-label">Completed Projects</div>
+                <div class="metric-value" id="completedProjects">6</div>
+                <div class="metric-subtitle">24% Completion Rate</div>
+            </div>
+            <div class="metric-card warning">
+                <div class="metric-label">Halt/Cancelled</div>
+                <div class="metric-value" id="haltProjects">0</div>
+                <div class="metric-subtitle">Projects on Hold</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">Overview</button>
+            <button class="tab" onclick="switchTab('risk')">Risk Analysis</button>
+            <button class="tab" onclick="switchTab('decisions')">Management Decisions</button>
+            <button class="tab" onclick="switchTab('cancelled')">Halt/Cancelled Projects</button>
+            <button class="tab" onclick="switchTab('cost')">Cost Analysis</button>
+        </div>
+
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <div class="dashboard-grid">
+                <div class="chart-card half">
+                    <h3 class="chart-title">Project Status Distribution</h3>
+                    <div class="chart-wrapper small">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card half">
+                    <h3 class="chart-title">Risk Level Distribution</h3>
+                    <div class="chart-wrapper small">
+                        <canvas id="riskChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card half">
+                    <h3 class="chart-title">Modification Type Breakdown</h3>
+                    <div class="chart-wrapper small">
+                        <canvas id="modTypeChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card half">
+                    <h3 class="chart-title">Plant-wise Project Distribution</h3>
+                    <div class="chart-wrapper small">
+                        <canvas id="plantChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card full">
+                    <h3 class="chart-title">Budget vs Actual Spending by Plant (QAR Million)</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="budgetChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Risk Analysis Tab -->
+        <div id="risk" class="tab-content">
+            <div class="dashboard-grid">
+                <div class="chart-card full">
+                    <h3 class="chart-title">High-Risk Projects Overview (QAR)</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="highRiskProjectsChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card half">
+                    <h3 class="chart-title">Risk Category Analysis</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="riskCategoryChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card half">
+                    <h3 class="chart-title">Priority vs Risk Matrix</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="priorityRiskChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card full">
+                    <h3 class="chart-title">Detailed Risk Assessment Table</h3>
+                    <div class="table-container">
+                        <table id="riskTable">
+                            <thead>
+                                <tr>
+                                    <th>Notification</th>
+                                    <th>Plant</th>
+                                    <th>Description</th>
+                                    <th>Risk Rating</th>
+                                    <th>Health & Safety</th>
+                                    <th>Environment</th>
+                                    <th>Regulatory</th>
+                                    <th>Financial (QAR)</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="riskTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Management Decisions Tab -->
+        <div id="decisions" class="tab-content">
+            <div class="chart-card full">
+                <h3 class="chart-title">Management Decisions Overview</h3>
+                <div class="filter-bar">
+                    <label>Filter by Decision:</label>
+                    <select id="decisionFilter" onchange="filterDecisions()">
+                        <option value="all">All Decisions</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Under Review">Under Review</option>
+                    </select>
+                    <button class="export-btn" onclick="exportReport()">Export Report</button>
+                </div>
+                <div id="decisionsContainer"></div>
+            </div>
+        </div>
+
+        <!-- Halt/Cancelled Tab -->
+        <div id="cancelled" class="tab-content">
+            <div class="chart-card full">
+                <h3 class="chart-title">Halt and Cancelled Projects</h3>
+                <div class="dashboard-grid">
+                    <div class="chart-card half">
+                        <h3 class="chart-title">Cost Impact by Category (QAR)</h3>
+                        <div class="chart-wrapper small">
+                            <canvas id="cancelledCostChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card half">
+                        <h3 class="chart-title">Risk Distribution - Cancelled Projects</h3>
+                        <div class="chart-wrapper small">
+                            <canvas id="cancelledRiskChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-container" style="margin-top: 2rem;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Notification</th>
+                                <th>Plant</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th>Budget (QAR)</th>
+                                <th>Spent (QAR)</th>
+                                <th>Risk Level</th>
+                                <th>Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cancelledTableBody">
+                            <tr>
+                                <td colspan="8" style="text-align: center; padding: 3rem; color: #6c757d;">
+                                    <strong>No cancelled or halt projects currently in the system.</strong><br>
+                                    <span style="font-size: 0.9rem;">All 25 projects are either approved, in progress, or under review.</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cost Analysis Tab -->
+        <div id="cost" class="tab-content">
+            <div class="dashboard-grid">
+                <div class="chart-card full">
+                    <h3 class="chart-title">Budget Allocation & Spending Analysis (QAR Million)</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="costAnalysisChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card half">
+                    <h3 class="chart-title">Cost by Priority Level (QAR Million)</h3>
+                    <div class="chart-wrapper small">
+                        <canvas id="costPriorityChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card half">
+                    <h3 class="chart-title">Spending Efficiency by Category</h3>
+                    <div class="chart-wrapper small">
+                        <canvas id="efficiencyChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card full">
+                    <h3 class="chart-title">Detailed Cost Breakdown</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Notification</th>
+                                    <th>Plant</th>
+                                    <th>Category</th>
+                                    <th>Priority</th>
+                                    <th>Budget (QAR)</th>
+                                    <th>Actual (QAR)</th>
+                                    <th>Commitment (QAR)</th>
+                                    <th>Total (QAR)</th>
+                                    <th>Utilization %</th>
+                                </tr>
+                            </thead>
+                            <tbody id="costTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Exchange rate USD to QAR
+        const USD_TO_QAR = 3.64;
+
+        // Data from CSV (converted to QAR)
+        const projectData = [
+            {sl: 1, company: "QAPCO", plant: "LDPE-1", notification: "MOC-2024-001", wbs: "WBS-LDPE-001", description: "Replacement of heat exchanger in reactor cooling system", modType: "Equipment Replacement", priority: "High", execution: "Emergency", approval: "Approved", category: "Safety Critical", status: "Implementation", consolidated: "In Progress", expenses: 455000, phase1: "Completed", worklist: "Technical Review", basis: "Equipment Failure", healthSafety: 5, environment: 4, humanCapital: 3, regulatory: 4, operational: 5, reputation: 3, financial: 4, projectExec: 15, likelihood: "High", inherentRisk: "Critical", riskAssessment: "High Risk - Immediate Action Required", decision: "Approved", decisionMonth: "January 2024", decisionRemarks: "Proceed with replacement - Safety priority", budget: 546000, actual: 455000, commitment: 91000, total: 546000},
+            {sl: 2, company: "QAPCO", plant: "LDPE-2", notification: "MOC-2024-002", wbs: "WBS-LDPE-002", description: "Upgrade of DCS system to latest version", modType: "System Upgrade", priority: "Medium", execution: "Planned", approval: "Approved", category: "Process Improvement", status: "Planning", consolidated: "Under Review", expenses: 0, phase1: "In Progress", worklist: "Engineering Design", basis: "Technology Obsolescence", healthSafety: 3, environment: 3, humanCapital: 2, regulatory: 3, operational: 4, reputation: 2, financial: 3, projectExec: 10, likelihood: "Medium", inherentRisk: "Moderate", riskAssessment: "Medium Risk - Scheduled Implementation", decision: "Approved", decisionMonth: "February 2024", decisionRemarks: "Approved for Q2 2024 execution", budget: 1638000, actual: 0, commitment: 1638000, total: 1638000},
+            {sl: 3, company: "QAPCO", plant: "HDPE-1", notification: "MOC-2024-003", wbs: "WBS-HDPE-001", description: "Installation of additional pressure relief valve", modType: "Safety Device Addition", priority: "High", execution: "Emergency", approval: "Approved", category: "Safety Critical", status: "Completed", consolidated: "Closed", expenses: 309400, phase1: "Completed", worklist: "Commissioning", basis: "Safety Enhancement", healthSafety: 5, environment: 2, humanCapital: 1, regulatory: 4, operational: 5, reputation: 2, financial: 2, projectExec: 12, likelihood: "High", inherentRisk: "Critical", riskAssessment: "High Risk - Completed Successfully", decision: "Approved", decisionMonth: "November 2023", decisionRemarks: "Completed successfully - No issues", budget: 309400, actual: 309400, commitment: 0, total: 309400},
+            {sl: 4, company: "QAPCO", plant: "LDPE-1", notification: "MOC-2024-004", wbs: "WBS-LDPE-003", description: "Modification of catalyst injection system", modType: "Process Modification", priority: "Medium", execution: "Planned", approval: "Approved", category: "Process Improvement", status: "Implementation", consolidated: "In Progress", expenses: 764400, phase1: "Completed", worklist: "Installation", basis: "Process Optimization", healthSafety: 3, environment: 3, humanCapital: 3, regulatory: 2, operational: 4, reputation: 3, financial: 4, projectExec: 11, likelihood: "Medium", inherentRisk: "Moderate", riskAssessment: "Medium Risk - On Track", decision: "Approved", decisionMonth: "December 2023", decisionRemarks: "Proceed as planned", budget: 1019200, actual: 764400, commitment: 254800, total: 1019200},
+            {sl: 5, company: "QAPCO", plant: "HDPE-2", notification: "MOC-2024-005", wbs: "WBS-HDPE-002", description: "Replacement of obsolete analyzer in quality lab", modType: "Equipment Replacement", priority: "Low", execution: "Planned", approval: "Approved", category: "Maintenance", status: "Planning", consolidated: "Under Review", expenses: 0, phase1: "Planning", worklist: "Procurement", basis: "Equipment Obsolescence", healthSafety: 2, environment: 2, humanCapital: 2, regulatory: 2, operational: 3, reputation: 2, financial: 3, projectExec: 8, likelihood: "Low", inherentRisk: "Low", riskAssessment: "Low Risk - Routine Replacement", decision: "Approved", decisionMonth: "January 2024", decisionRemarks: "Schedule for Q3 2024", budget: 345800, actual: 0, commitment: 0, total: 345800},
+            {sl: 6, company: "QAPCO", plant: "LLDPE-1", notification: "MOC-2024-006", wbs: "WBS-LLDPE-001", description: "Installation of advanced flare gas recovery system", modType: "Environmental Project", priority: "High", execution: "Planned", approval: "Approved", category: "Environmental", status: "Implementation", consolidated: "In Progress", expenses: 1892800, phase1: "Completed", worklist: "Construction", basis: "Environmental Compliance", healthSafety: 3, environment: 5, humanCapital: 3, regulatory: 4, operational: 5, reputation: 4, financial: 5, projectExec: 16, likelihood: "High", inherentRisk: "Critical", riskAssessment: "High Risk - Strategic Initiative", decision: "Approved", decisionMonth: "September 2023", decisionRemarks: "Critical for environmental targets", budget: 2730000, actual: 1892800, commitment: 837200, total: 2730000},
+            {sl: 7, company: "QAPCO", plant: "LDPE-2", notification: "MOC-2024-007", wbs: "WBS-LDPE-004", description: "Upgrade of fire detection system in reactor area", modType: "Safety System Upgrade", priority: "High", execution: "Planned", approval: "Approved", category: "Safety Critical", status: "Planning", consolidated: "Under Review", expenses: 0, phase1: "In Progress", worklist: "Design Review", basis: "Safety Enhancement", healthSafety: 5, environment: 2, humanCapital: 2, regulatory: 3, operational: 5, reputation: 2, financial: 3, projectExec: 13, likelihood: "High", inherentRisk: "Critical", riskAssessment: "High Risk - Safety Priority", decision: "Approved", decisionMonth: "February 2024", decisionRemarks: "Approved - Execute before turnaround", budget: 1164800, actual: 0, commitment: 1164800, total: 1164800},
+            {sl: 8, company: "QAPCO", plant: "HDPE-1", notification: "MOC-2024-008", wbs: "WBS-HDPE-003", description: "Modification of compressor seal system", modType: "Equipment Modification", priority: "Medium", execution: "Planned", approval: "Approved", category: "Reliability Improvement", status: "Implementation", consolidated: "In Progress", expenses: 527800, phase1: "Completed", worklist: "Installation", basis: "Equipment Reliability", healthSafety: 3, environment: 3, humanCapital: 2, regulatory: 3, operational: 4, reputation: 3, financial: 4, projectExec: 10, likelihood: "Medium", inherentRisk: "Moderate", riskAssessment: "Medium Risk - Performance Improvement", decision: "Approved", decisionMonth: "October 2023", decisionRemarks: "Proceed with dry gas seal upgrade", budget: 709800, actual: 527800, commitment: 182000, total: 709800},
+            {sl: 9, company: "QAPCO", plant: "LLDPE-1", notification: "MOC-2024-009", wbs: "WBS-LLDPE-002", description: "Installation of online viscosity analyzer", modType: "Instrumentation Addition", priority: "Low", execution: "Planned", approval: "Approved", category: "Process Improvement", status: "Planning", consolidated: "Under Review", expenses: 0, phase1: "Planning", worklist: "Vendor Selection", basis: "Process Optimization", healthSafety: 2, environment: 2, humanCapital: 2, regulatory: 2, operational: 3, reputation: 3, financial: 4, projectExec: 9, likelihood: "Medium", inherentRisk: "Moderate", riskAssessment: "Low Risk - Quality Enhancement", decision: "Approved", decisionMonth: "January 2024", decisionRemarks: "Approved for 2024 budget", budget: 455000, actual: 0, commitment: 0, total: 455000},
+            {sl: 10, company: "QAPCO", plant: "LDPE-1", notification: "MOC-2024-010", wbs: "WBS-LDPE-005", description: "Replacement of aging motor control centers", modType: "Electrical Upgrade", priority: "High", execution: "Planned", approval: "Approved", category: "Safety Critical", status: "Planning", consolidated: "Under Review", expenses: 0, phase1: "In Progress", worklist: "Engineering", basis: "Equipment Obsolescence", healthSafety: 4, environment: 3, humanCapital: 3, regulatory: 4, operational: 4, reputation: 3, financial: 3, projectExec: 12, likelihood: "High", inherentRisk: "Critical", riskAssessment: "High Risk - Infrastructure Critical", decision: "Approved", decisionMonth: "February 2024", decisionRemarks: "Critical infrastructure - prioritize", budget: 2475200, actual: 0, commitment: 2475200, total: 2475200},
+            {sl: 11, company: "QAPCO", plant: "HDPE-2", notification: "MOC-2024-011", wbs: "WBS-HDPE-004", description: "Installation of energy recovery turbine", modType: "Energy Efficiency Project", priority: "Medium", execution: "Planned", approval: "Approved", category: "Cost Reduction", status: "Planning", consolidated: "Under Review", expenses: 0, phase1: "Planning", worklist: "Feasibility Study", basis: "Energy Optimization", healthSafety: 2, environment: 3, humanCapital: 3, regulatory: 3, operational: 4, reputation: 4, financial: 5, projectExec: 12, likelihood: "Medium", inherentRisk: "Moderate", riskAssessment: "Medium Risk - ROI Positive", decision: "Approved", decisionMonth: "December 2023", decisionRemarks: "Approved - Target 2025 completion", budget: 4550000, actual: 0, commitment: 0, total: 4550000},
+            {sl: 12, company: "QAPCO", plant: "LLDPE-1", notification: "MOC-2024-012", wbs: "WBS-LLDPE-003", description: "Upgrade of emergency shutdown system", modType: "Safety System Upgrade", priority: "High", execution: "Emergency", approval: "Approved", category: "Safety Critical", status: "Implementation", consolidated: "In Progress", expenses: 1383200, phase1: "Completed", worklist: "Testing", basis: "Safety Enhancement", healthSafety: 5, environment: 2, humanCapital: 2, regulatory: 4, operational: 5, reputation: 2, financial: 2, projectExec: 14, likelihood: "High", inherentRisk: "Critical", riskAssessment: "High Risk - Safety Critical", decision: "Approved", decisionMonth: "January 2024", decisionRemarks: "Immediate implementation required", budget: 1638000, actual: 1383200, commitment: 254800, total: 1638000},
+            {sl: 13, company: "QAPCO", plant: "LDPE-2", notification: "MOC-2024-013", wbs: "WBS-LDPE-006", description: "Installation of nitrogen blanketing system for storage tanks", modType: "Safety Enhancement", priority: "Medium", execution: "Planned", approval: "Approved", category: "Safety Critical", status: "Planning", consolidated: "Under Review", expenses: 0, phase1: "In Progress", worklist: "Design", basis: "Safety Enhancement", healthSafety: 4, environment: 4, humanCapital: 2, regulatory: 3, operational: 4, reputation: 2, financial: 3, projectExec: 11, likelihood: "High", inherentRisk: "Critical", riskAssessment: "Medium Risk - Safety Improvement", decision: "Approved", decisionMonth: "January 2024", decisionRemarks: "Approved for 2024 execution", budget: 637000, actual: 0, commitment: 637000, total: 637000},
+            {sl: 14, company: "QAPCO", plant: "HDPE-1", notification: "MOC-2024-014", wbs: "WBS-HDPE-005", description: "Replacement of obsolete programmable logic controllers", modType: "Control System Upgrade", priority: "High", execution: "Planned", approval: "Approved", category: "Reliability Improvement", status: "Planning", consolidated: "Under Review", expenses: 0, phase1: "Planning", worklist: "Vendor Evaluation", basis: "Technology Obsolescence", healthSafety: 3, environment: 3, humanCapital: 2, regulatory: 3, operational: 4, reputation: 3, financial: 4, projectExec: 11, likelihood: "Medium", inherentRisk: "Critical", riskAssessment: "Medium Risk - Obsolescence Driven", decision: "Approved", decisionMonth: "February 2024", decisionRemarks: "Essential upgrade - no spare parts available", budget: 1965600, actual: 0, commitment: 1965600, total: 1965600},
+            {sl: 15, company: "QAPCO", plant: "LLDPE-1", notification: "MOC-2024-015", wbs: "WBS-LLDPE-004", description: "Installation of advanced process analytics software", modType: "Digital Transformation", priority: "Low", execution: "Planned", approval: "Under Review", category: "Process Improvement", status: "Planning", consolidated: "Under Review", expenses: 0, phase1: "Planning", worklist: "Requirements Definition", basis: "Process Optimization", healthSafety: 2, environment: 2, humanCapital: 2, regulatory: 3, operational: 3, reputation: 3, financial: 4, projectExec: 9, likelihood: "Medium", inherentRisk: "Moderate", riskAssessment: "Low Risk - Innovation Initiative", decision: "Under Review", decisionMonth: "February 2024", decisionRemarks: "Under management review", budget: 3094000, actual: 0, commitment: 0, total: 3094000},
+            {sl: 16, company: "QAPCO", plant: "LDPE-1", notification: "MOC-2024-016", wbs: "WBS-LDPE-007", description: "Modification of cooling water system", modType: "Process Modification", priority: "Medium", execution: "Planned", approval: "Approved", category: "Efficiency Improvement", status: "Implementation", consolidated: "In Progress", expenses: 345800, phase1: "Completed", worklist: "Installation", basis: "Process Optimization", healthSafety: 3, environment: 3, humanCapital: 3, regulatory: 2, operational: 3, reputation: 3, financial: 4, projectExec: 10, likelihood: "Medium", inherentRisk: "Moderate", riskAssessment: "Medium Risk - Efficiency Focus", decision: "Approved", decisionMonth: "November 2023", decisionRemarks: "Proceed during planned shutdown", budget: 600600, actual: 345800, commitment: 254800, total: 600600},
+            {sl: 17, company: "QAPCO", plant: "HDPE-2", notification: "MOC-2024-017", wbs: "WBS-HDPE-006", description: "Installation of leak detection system for pipelines", modType: "Safety Enhancement", priority: "High", execution: "Planned", approval: "Approved", category: "Safety Critical", status: "Planning", consolidated: "Under Review", expenses: 0, phase1: "In Progress", worklist: "Engineering Design", basis: "Safety Enhancement", healthSafety: 4, environment: 4, humanCapital: 3, regulatory: 3, operational: 5, reputation: 3, financial: 3, projectExec: 13, likelihood: "High", inherentRisk: "Critical", riskAssessment: "High Risk - Loss Prevention", decision: "Approved", decisionMonth: "January 2024", decisionRemarks: "Approved - Install by Q3 2024", budget: 1037400, actual: 0, commitment: 1037400, total: 1037400},
+            {sl: 18, company: "QAPCO", plant: "LLDPE-1", notification: "MOC-2024-018", wbs: "WBS-LLDPE-005", description: "Replacement of reactor agitator with improved design", modType: "Equipment Replacement", priority: "Medium", execution: "Planned", approval: "Approved", category: "Process Improvement", status: "Planning", consolidated: "Under Review", expenses: 0, phase1: "Planning", worklist: "Design Review", basis: "Equipment Reliability", healthSafety: 3, environment: 3, humanCapital: 2, regulatory: 3, operational: 4, reputation: 3, financial: 4, projectExec: 11, likelihood: "Medium", inherentRisk: "Moderate", riskAssessment: "Medium Risk - Performance Upgrade", decision: "Approved", decisionMonth: "December 2023", decisionRemarks: "Schedule for 2024 turnaround", budget: 1528800, actual: 0, commitment: 0, total: 1528800},
+            {sl: 19, company: "QAPCO", plant: "LDPE-2", notification: "MOC-2024-019", wbs: "WBS-LDPE-008", description: "Installation of advanced corrosion monitoring system", modType: "Integrity Management", priority: "Medium", execution: "Planned", approval: "Approved", category: "Reliability Improvement", status: "Planning", consolidated: "Under Review", expenses: 0, phase1: "Planning", worklist: "Technology Selection", basis: "Integrity Management", healthSafety: 3, environment: 3, humanCapital: 3, regulatory: 3, operational: 4, reputation: 3, financial: 4, projectExec: 11, likelihood: "Medium", inherentRisk: "Moderate", riskAssessment: "Medium Risk - Asset Protection", decision: "Approved", decisionMonth: "January 2024", decisionRemarks: "Approved - Strategic asset management", budget: 709800, actual: 0, commitment: 709800, total: 709800},
+            {sl: 20, company: "QAPCO", plant: "HDPE-1", notification: "MOC-2024-020", wbs: "WBS-HDPE-007", description: "Upgrade of warehouse inventory management system", modType: "IT System Upgrade", priority: "Low", execution: "Planned", approval: "Approved", category: "Process Improvement", status: "Planning", consolidated: "Under Review", expenses: 0, phase1: "Planning", worklist: "Software Selection", basis: "Process Optimization", healthSafety: 1, environment: 2, humanCapital: 2, regulatory: 2, operational: 2, reputation: 2, financial: 3, projectExec: 7, likelihood: "Low", inherentRisk: "Low", riskAssessment: "Low Risk - Administrative Improvement", decision: "Approved", decisionMonth: "February 2024", decisionRemarks: "Proceed with implementation", budget: 527800, actual: 0, commitment: 0, total: 527800},
+            {sl: 21, company: "QAPCO", plant: "LLDPE-1", notification: "MOC-2024-021", wbs: "WBS-LLDPE-006", description: "Installation of static mixer in feed line", modType: "Process Enhancement", priority: "Low", execution: "Planned", approval: "Approved", category: "Process Improvement", status: "Implementation", consolidated: "In Progress", expenses: 163800, phase1: "Completed", worklist: "Installation", basis: "Process Optimization", healthSafety: 2, environment: 2, humanCapital: 2, regulatory: 2, operational: 3, reputation: 3, financial: 4, projectExec: 8, likelihood: "Low", inherentRisk: "Moderate", riskAssessment: "Low Risk - Quality Improvement", decision: "Approved", decisionMonth: "October 2023", decisionRemarks: "Low cost high benefit modification", budget: 236600, actual: 163800, commitment: 72800, total: 236600},
+            {sl: 22, company: "QAPCO", plant: "LDPE-1", notification: "MOC-2024-022", wbs: "WBS-LDPE-009", description: "Replacement of safety valves in high pressure section", modType: "Safety Device Replacement", priority: "High", execution: "Planned", approval: "Approved", category: "Safety Critical", status: "Planning", consolidated: "Under Review", expenses: 0, phase1: "In Progress", worklist: "Procurement", basis: "Safety Compliance", healthSafety: 5, environment: 2, humanCapital: 2, regulatory: 4, operational: 5, reputation: 2, financial: 2, projectExec: 13, likelihood: "High", inherentRisk: "Critical", riskAssessment: "High Risk - Regulatory Compliance", decision: "Approved", decisionMonth: "January 2024", decisionRemarks: "Mandatory compliance - prioritize", budget: 819000, actual: 0, commitment: 819000, total: 819000},
+            {sl: 23, company: "QAPCO", plant: "HDPE-2", notification: "MOC-2024-023", wbs: "WBS-HDPE-008", description: "Installation of variable frequency drives on pumps", modType: "Energy Efficiency", priority: "Medium", execution: "Planned", approval: "Approved", category: "Cost Reduction", status: "Planning", consolidated: "Under Review", expenses: 0, phase1: "Planning", worklist: "Engineering", basis: "Energy Optimization", healthSafety: 2, environment: 2, humanCapital: 2, regulatory: 2, operational: 3, reputation: 4, financial: 4, projectExec: 9, likelihood: "Medium", inherentRisk: "Moderate", riskAssessment: "Low Risk - Energy Savings", decision: "Approved", decisionMonth: "December 2023", decisionRemarks: "Approved - Good ROI", budget: 1237600, actual: 0, commitment: 0, total: 1237600},
+            {sl: 24, company: "QAPCO", plant: "LLDPE-1", notification: "MOC-2024-024", wbs: "WBS-LLDPE-007", description: "Upgrade of gas chromatograph in analytical lab", modType: "Laboratory Equipment", priority: "Low", execution: "Planned", approval: "Approved", category: "Quality Improvement", status: "Planning", consolidated: "Under Review", expenses: 0, phase1: "Planning", worklist: "Procurement", basis: "Equipment Upgrade", healthSafety: 2, environment: 2, humanCapital: 2, regulatory: 2, operational: 3, reputation: 2, financial: 3, projectExec: 8, likelihood: "Low", inherentRisk: "Low", riskAssessment: "Low Risk - Routine Upgrade", decision: "Approved", decisionMonth: "January 2024", decisionRemarks: "Approved for Q2 2024", budget: 418600, actual: 0, commitment: 0, total: 418600},
+            {sl: 25, company: "QAPCO", plant: "LDPE-2", notification: "MOC-2024-025", wbs: "WBS-LDPE-010", description: "Installation of hydrogen sulfide detection system", modType: "Safety Enhancement", priority: "High", execution: "Planned", approval: "Approved", category: "Safety Critical", status: "Implementation", consolidated: "In Progress", expenses: 564200, phase1: "Completed", worklist: "Installation", basis: "Safety Enhancement", healthSafety: 5, environment: 3, humanCapital: 2, regulatory: 3, operational: 5, reputation: 2, financial: 2, projectExec: 13, likelihood: "High", inherentRisk: "Critical", riskAssessment: "High Risk - Personnel Safety", decision: "Approved", decisionMonth: "November 2023", decisionRemarks: "Critical safety system", budget: 673400, actual: 564200, commitment: 109200, total: 673400}
+        ];
+
+        // Calculate metrics
+        function updateMetrics() {
+            const totalProjects = projectData.length;
+            const highRiskCount = projectData.filter(p => p.inherentRisk === 'Critical').length;
+            const totalBudget = projectData.reduce((sum, p) => sum + p.budget, 0);
+            const completedProjects = projectData.filter(p => p.status === 'Completed').length;
+            const haltProjects = projectData.filter(p => p.status === 'Halt' || p.status === 'Cancelled').length;
+
+            document.getElementById('totalProjects').textContent = totalProjects;
+            document.getElementById('highRiskCount').textContent = highRiskCount;
+            document.getElementById('totalBudget').textContent = (totalBudget / 1000000).toFixed(1) + 'M';
+            document.getElementById('completedProjects').textContent = completedProjects;
+            document.getElementById('haltProjects').textContent = haltProjects;
+        }
+
+        // Status Chart
+        function createStatusChart() {
+            const statusCounts = {};
+            projectData.forEach(p => {
+                statusCounts[p.status] = (statusCounts[p.status] || 0) + 1;
+            });
+
+            new Chart(document.getElementById('statusChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(statusCounts),
+                    datasets: [{
+                        data: Object.values(statusCounts),
+                        backgroundColor: ['#1a4d8f', '#06d6a0', '#ff6b35', '#ffd60a', '#ef476f'],
+                        borderWidth: 3,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 15, font: { size: 12, family: 'Outfit' } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Risk Chart
+        function createRiskChart() {
+            const riskCounts = {};
+            projectData.forEach(p => {
+                riskCounts[p.inherentRisk] = (riskCounts[p.inherentRisk] || 0) + 1;
+            });
+
+            new Chart(document.getElementById('riskChart'), {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(riskCounts),
+                    datasets: [{
+                        data: Object.values(riskCounts),
+                        backgroundColor: ['#ef476f', '#ff9800', '#ffd60a', '#06d6a0'],
+                        borderWidth: 3,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 15, font: { size: 12, family: 'Outfit' } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Modification Type Chart
+        function createModTypeChart() {
+            const modTypeCounts = {};
+            projectData.forEach(p => {
+                modTypeCounts[p.modType] = (modTypeCounts[p.modType] || 0) + 1;
+            });
+
+            const sortedData = Object.entries(modTypeCounts).sort((a, b) => b[1] - a[1]);
+
+            new Chart(document.getElementById('modTypeChart'), {
+                type: 'bar',
+                data: {
+                    labels: sortedData.map(d => d[0]),
+                    datasets: [{
+                        label: 'Number of Projects',
+                        data: sortedData.map(d => d[1]),
+                        backgroundColor: '#2d6cb5',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { backgroundColor: 'rgba(0,0,0,0.8)' }
+                    },
+                    scales: {
+                        x: { 
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0,0,0,0.05)' },
+                            ticks: { font: { family: 'Outfit' } }
+                        },
+                        y: { 
+                            grid: { display: false },
+                            ticks: { font: { family: 'Outfit', size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Plant Chart
+        function createPlantChart() {
+            const plantCounts = {};
+            projectData.forEach(p => {
+                plantCounts[p.plant] = (plantCounts[p.plant] || 0) + 1;
+            });
+
+            new Chart(document.getElementById('plantChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(plantCounts),
+                    datasets: [{
+                        label: 'Projects',
+                        data: Object.values(plantCounts),
+                        backgroundColor: ['#1a4d8f', '#2d6cb5', '#ff6b35', '#06d6a0', '#ffd60a'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { backgroundColor: 'rgba(0,0,0,0.8)' }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0,0,0,0.05)' },
+                            ticks: { font: { family: 'Outfit' } }
+                        },
+                        x: { 
+                            grid: { display: false },
+                            ticks: { font: { family: 'Outfit' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Budget Chart
+        function createBudgetChart() {
+            const plantData = {};
+            projectData.forEach(p => {
+                if (!plantData[p.plant]) {
+                    plantData[p.plant] = { budget: 0, actual: 0, commitment: 0 };
+                }
+                plantData[p.plant].budget += p.budget / 1000000;
+                plantData[p.plant].actual += p.actual / 1000000;
+                plantData[p.plant].commitment += p.commitment / 1000000;
+            });
+
+            new Chart(document.getElementById('budgetChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(plantData),
+                    datasets: [
+                        {
+                            label: 'Budget',
+                            data: Object.values(plantData).map(d => d.budget),
+                            backgroundColor: '#1a4d8f',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Actual Spent',
+                            data: Object.values(plantData).map(d => d.actual),
+                            backgroundColor: '#06d6a0',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Commitment',
+                            data: Object.values(plantData).map(d => d.commitment),
+                            backgroundColor: '#ffd60a',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            position: 'top',
+                            labels: { padding: 20, font: { size: 12, family: 'Outfit', weight: '600' } }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': QAR ' + context.parsed.y.toFixed(2) + 'M';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            title: { display: true, text: 'Amount (QAR Million)', font: { family: 'Outfit', size: 13, weight: '600' } },
+                            grid: { color: 'rgba(0,0,0,0.05)' },
+                            ticks: { font: { family: 'Outfit' } }
+                        },
+                        x: { 
+                            grid: { display: false },
+                            ticks: { font: { family: 'Outfit', weight: '600' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // High Risk Projects Chart with Values
+        function createHighRiskProjectsChart() {
+            const highRiskProjects = projectData
+                .filter(p => p.inherentRisk === 'Critical')
+                .sort((a, b) => b.budget - a.budget)
+                .slice(0, 10);
+
+            new Chart(document.getElementById('highRiskProjectsChart'), {
+                type: 'bar',
+                data: {
+                    labels: highRiskProjects.map(p => p.notification),
+                    datasets: [{
+                        label: 'Budget (QAR)',
+                        data: highRiskProjects.map(p => p.budget / 1000000),
+                        backgroundColor: '#ef476f',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            callbacks: {
+                                title: function(context) {
+                                    const project = highRiskProjects[context[0].dataIndex];
+                                    return project.description;
+                                },
+                                label: function(context) {
+                                    return 'Budget: QAR ' + context.parsed.x.toFixed(2) + 'M';
+                                },
+                                afterLabel: function(context) {
+                                    const project = highRiskProjects[context.dataIndex];
+                                    return [
+                                        'Plant: ' + project.plant,
+                                        'Priority: ' + project.priority,
+                                        'Status: ' + project.status
+                                    ];
+                                }
+                            }
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'end',
+                            formatter: (value) => 'QAR ' + value.toFixed(1) + 'M',
+                            color: '#ef476f',
+                            font: { weight: 'bold', size: 11, family: 'JetBrains Mono' }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            beginAtZero: true,
+                            title: { display: true, text: 'Budget (QAR Million)', font: { family: 'Outfit', size: 13, weight: '600' } },
+                            grid: { color: 'rgba(0,0,0,0.05)' },
+                            ticks: { font: { family: 'Outfit' } }
+                        },
+                        y: { 
+                            grid: { display: false },
+                            ticks: { font: { family: 'Outfit', size: 11, weight: '600' } }
+                        }
+                    }
+                },
+                plugins: [{
+                    afterDatasetsDraw: function(chart) {
+                        const ctx = chart.ctx;
+                        chart.data.datasets.forEach((dataset, i) => {
+                            const meta = chart.getDatasetMeta(i);
+                            meta.data.forEach((bar, index) => {
+                                const data = dataset.data[index];
+                                ctx.fillStyle = '#ef476f';
+                                ctx.font = 'bold 11px JetBrains Mono';
+                                ctx.textAlign = 'left';
+                                ctx.fillText('QAR ' + data.toFixed(1) + 'M', bar.x + 5, bar.y + 4);
+                            });
+                        });
+                    }
+                }]
+            });
+        }
+
+        // Risk Category Chart
+        function createRiskCategoryChart() {
+            const categories = ['healthSafety', 'environment', 'regulatory', 'operational', 'financial'];
+            const categoryLabels = ['Health & Safety', 'Environment', 'Regulatory', 'Operational', 'Financial'];
+            const avgScores = categories.map(cat => {
+                const sum = projectData.reduce((acc, p) => acc + p[cat], 0);
+                return (sum / projectData.length).toFixed(2);
+            });
+
+            new Chart(document.getElementById('riskCategoryChart'), {
+                type: 'radar',
+                data: {
+                    labels: categoryLabels,
+                    datasets: [{
+                        label: 'Average Risk Score',
+                        data: avgScores,
+                        backgroundColor: 'rgba(26, 77, 143, 0.2)',
+                        borderColor: '#1a4d8f',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#1a4d8f',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { backgroundColor: 'rgba(0,0,0,0.8)' }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 5,
+                            ticks: { 
+                                stepSize: 1,
+                                font: { family: 'Outfit' }
+                            },
+                            pointLabels: {
+                                font: { family: 'Outfit', size: 12, weight: '600' }
+                            },
+                            grid: { color: 'rgba(0,0,0,0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Priority Risk Matrix
+        function createPriorityRiskChart() {
+            const matrix = { High: {}, Medium: {}, Low: {} };
+            projectData.forEach(p => {
+                if (!matrix[p.priority][p.inherentRisk]) {
+                    matrix[p.priority][p.inherentRisk] = 0;
+                }
+                matrix[p.priority][p.inherentRisk]++;
+            });
+
+            const priorities = ['High', 'Medium', 'Low'];
+            const risks = ['Critical', 'Moderate', 'Low'];
+            const datasets = risks.map(risk => ({
+                label: risk + ' Risk',
+                data: priorities.map(priority => matrix[priority][risk] || 0),
+                backgroundColor: risk === 'Critical' ? '#ef476f' : risk === 'Moderate' ? '#ffd60a' : '#06d6a0',
+                borderRadius: 6
+            }));
+
+            new Chart(document.getElementById('priorityRiskChart'), {
+                type: 'bar',
+                data: {
+                    labels: priorities,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            position: 'top',
+                            labels: { padding: 15, font: { size: 12, family: 'Outfit', weight: '600' } }
+                        },
+                        tooltip: { backgroundColor: 'rgba(0,0,0,0.8)' }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            title: { display: true, text: 'Number of Projects', font: { family: 'Outfit', size: 13, weight: '600' } },
+                            grid: { color: 'rgba(0,0,0,0.05)' },
+                            ticks: { font: { family: 'Outfit' } }
+                        },
+                        x: { 
+                            grid: { display: false },
+                            ticks: { font: { family: 'Outfit', weight: '600' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Risk Table
+        function populateRiskTable() {
+            const highRiskProjects = projectData
+                .filter(p => p.priority === 'High' || p.inherentRisk === 'Critical')
+                .sort((a, b) => b.healthSafety - a.healthSafety);
+
+            const tbody = document.getElementById('riskTableBody');
+            tbody.innerHTML = highRiskProjects.map(p => `
+                <tr>
+                    <td><strong>${p.notification}</strong></td>
+                    <td>${p.plant}</td>
+                    <td>${p.description}</td>
+                    <td><span class="risk-indicator ${p.inherentRisk.toLowerCase()}">${p.inherentRisk}</span></td>
+                    <td><strong>${p.healthSafety}</strong></td>
+                    <td><strong>${p.environment}</strong></td>
+                    <td><strong>${p.regulatory}</strong></td>
+                    <td><span class="cost-highlight">QAR ${(p.budget / 1000000).toFixed(2)}M</span></td>
+                    <td><span class="badge badge-${p.status === 'Completed' ? 'approved' : p.status === 'Planning' ? 'pending' : 'medium'}">${p.status}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // Decisions
+        function populateDecisions() {
+            const container = document.getElementById('decisionsContainer');
+            const approvedProjects = projectData.filter(p => p.decision);
+
+            container.innerHTML = approvedProjects.map(p => `
+                <div class="decision-card">
+                    <div class="decision-header">
+                        <div>
+                            <div class="decision-title">${p.notification} - ${p.description}</div>
+                            <div style="margin-top: 0.5rem;">
+                                <span class="badge badge-${p.decision === 'Approved' ? 'approved' : 'pending'}">${p.decision}</span>
+                                <span class="badge badge-${p.priority === 'High' ? 'high' : p.priority === 'Medium' ? 'medium' : 'low'}">${p.priority} Priority</span>
+                                <span class="risk-indicator ${p.inherentRisk.toLowerCase()}">${p.inherentRisk} Risk</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="decision-body">
+                        <div class="decision-metric">
+                            <div class="decision-metric-label">Plant</div>
+                            <div class="decision-metric-value">${p.plant}</div>
+                        </div>
+                        <div class="decision-metric">
+                            <div class="decision-metric-label">Budget (QAR)</div>
+                            <div class="decision-metric-value">${(p.budget / 1000000).toFixed(2)}M</div>
+                        </div>
+                        <div class="decision-metric">
+                            <div class="decision-metric-label">Spent (QAR)</div>
+                            <div class="decision-metric-value">${(p.actual / 1000000).toFixed(2)}M</div>
+                        </div>
+                        <div class="decision-metric">
+                            <div class="decision-metric-label">Category</div>
+                            <div class="decision-metric-value" style="font-size: 0.9rem;">${p.category}</div>
+                        </div>
+                        <div class="decision-metric" style="grid-column: span 2;">
+                            <div class="decision-metric-label">Decision Month</div>
+                            <div class="decision-metric-value" style="font-size: 1rem;">${p.decisionMonth}</div>
+                        </div>
+                        <div class="decision-metric" style="grid-column: span 2;">
+                            <div class="decision-metric-label">Management Remarks</div>
+                            <div style="font-size: 0.9rem; margin-top: 0.5rem; color: #333;">${p.decisionRemarks}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterDecisions() {
+            const filter = document.getElementById('decisionFilter').value;
+            const container = document.getElementById('decisionsContainer');
+            const filteredProjects = filter === 'all' 
+                ? projectData.filter(p => p.decision)
+                : projectData.filter(p => p.decision === filter);
+
+            container.innerHTML = filteredProjects.map(p => `
+                <div class="decision-card">
+                    <div class="decision-header">
+                        <div>
+                            <div class="decision-title">${p.notification} - ${p.description}</div>
+                            <div style="margin-top: 0.5rem;">
+                                <span class="badge badge-${p.decision === 'Approved' ? 'approved' : 'pending'}">${p.decision}</span>
+                                <span class="badge badge-${p.priority === 'High' ? 'high' : p.priority === 'Medium' ? 'medium' : 'low'}">${p.priority} Priority</span>
+                                <span class="risk-indicator ${p.inherentRisk.toLowerCase()}">${p.inherentRisk} Risk</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="decision-body">
+                        <div class="decision-metric">
+                            <div class="decision-metric-label">Plant</div>
+                            <div class="decision-metric-value">${p.plant}</div>
+                        </div>
+                        <div class="decision-metric">
+                            <div class="decision-metric-label">Budget (QAR)</div>
+                            <div class="decision-metric-value">${(p.budget / 1000000).toFixed(2)}M</div>
+                        </div>
+                        <div class="decision-metric">
+                            <div class="decision-metric-label">Spent (QAR)</div>
+                            <div class="decision-metric-value">${(p.actual / 1000000).toFixed(2)}M</div>
+                        </div>
+                        <div class="decision-metric">
+                            <div class="decision-metric-label">Category</div>
+                            <div class="decision-metric-value" style="font-size: 0.9rem;">${p.category}</div>
+                        </div>
+                        <div class="decision-metric" style="grid-column: span 2;">
+                            <div class="decision-metric-label">Decision Month</div>
+                            <div class="decision-metric-value" style="font-size: 1rem;">${p.decisionMonth}</div>
+                        </div>
+                        <div class="decision-metric" style="grid-column: span 2;">
+                            <div class="decision-metric-label">Management Remarks</div>
+                            <div style="font-size: 0.9rem; margin-top: 0.5rem; color: #333;">${p.decisionRemarks}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Cancelled Cost Chart
+        function createCancelledCostChart() {
+            // Since there are no cancelled projects, show placeholder
+            new Chart(document.getElementById('cancelledCostChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Safety Critical', 'Process Improvement', 'Environmental', 'Maintenance'],
+                    datasets: [{
+                        label: 'Cost (QAR)',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: '#ccc'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, max: 1 },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // Cancelled Risk Chart
+        function createCancelledRiskChart() {
+            new Chart(document.getElementById('cancelledRiskChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['No Cancelled Projects'],
+                    datasets: [{
+                        data: [1],
+                        backgroundColor: ['#e0e5eb']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // Cost Analysis Chart
+        function createCostAnalysisChart() {
+            const categories = [...new Set(projectData.map(p => p.category))];
+            const budgetData = categories.map(cat => {
+                return projectData.filter(p => p.category === cat).reduce((sum, p) => sum + p.budget, 0) / 1000000;
+            });
+            const actualData = categories.map(cat => {
+                return projectData.filter(p => p.category === cat).reduce((sum, p) => sum + p.actual, 0) / 1000000;
+            });
+
+            new Chart(document.getElementById('costAnalysisChart'), {
+                type: 'bar',
+                data: {
+                    labels: categories,
+                    datasets: [
+                        {
+                            label: 'Budget',
+                            data: budgetData,
+                            backgroundColor: '#1a4d8f',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Actual',
+                            data: actualData,
+                            backgroundColor: '#06d6a0',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            position: 'top',
+                            labels: { padding: 20, font: { size: 12, family: 'Outfit', weight: '600' } }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': QAR ' + context.parsed.y.toFixed(2) + 'M';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            title: { display: true, text: 'Amount (QAR Million)', font: { family: 'Outfit', size: 13, weight: '600' } },
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        x: { 
+                            grid: { display: false },
+                            ticks: { font: { family: 'Outfit', size: 10, weight: '600' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Cost Priority Chart
+        function createCostPriorityChart() {
+            const priorities = ['High', 'Medium', 'Low'];
+            const costData = priorities.map(priority => {
+                return projectData.filter(p => p.priority === priority).reduce((sum, p) => sum + p.budget, 0) / 1000000;
+            });
+
+            new Chart(document.getElementById('costPriorityChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: priorities,
+                    datasets: [{
+                        data: costData,
+                        backgroundColor: ['#ef476f', '#ffd60a', '#06d6a0'],
+                        borderWidth: 3,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            position: 'bottom',
+                            labels: { padding: 15, font: { size: 12, family: 'Outfit', weight: '600' } }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': QAR ' + context.parsed.toFixed(2) + 'M';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Efficiency Chart
+        function createEfficiencyChart() {
+            const categories = [...new Set(projectData.map(p => p.category))];
+            const efficiencyData = categories.map(cat => {
+                const projects = projectData.filter(p => p.category === cat);
+                const totalBudget = projects.reduce((sum, p) => sum + p.budget, 0);
+                const totalActual = projects.reduce((sum, p) => sum + p.actual, 0);
+                return totalBudget > 0 ? ((totalActual / totalBudget) * 100).toFixed(1) : 0;
+            });
+
+            new Chart(document.getElementById('efficiencyChart'), {
+                type: 'bar',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        label: 'Spending %',
+                        data: efficiencyData,
+                        backgroundColor: '#2d6cb5',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Utilization: ' + context.parsed.x + '%';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            beginAtZero: true,
+                            max: 100,
+                            title: { display: true, text: 'Budget Utilization %', font: { family: 'Outfit', size: 13, weight: '600' } },
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        y: { 
+                            grid: { display: false },
+                            ticks: { font: { family: 'Outfit', size: 10, weight: '600' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Cost Table
+        function populateCostTable() {
+            const tbody = document.getElementById('costTableBody');
+            const sortedProjects = [...projectData].sort((a, b) => b.budget - a.budget);
+
+            tbody.innerHTML = sortedProjects.map(p => {
+                const utilization = p.budget > 0 ? ((p.total / p.budget) * 100).toFixed(1) : 0;
+                return `
+                    <tr>
+                        <td><strong>${p.notification}</strong></td>
+                        <td>${p.plant}</td>
+                        <td>${p.category}</td>
+                        <td><span class="badge badge-${p.priority === 'High' ? 'high' : p.priority === 'Medium' ? 'medium' : 'low'}">${p.priority}</span></td>
+                        <td><span class="cost-highlight">${(p.budget / 1000000).toFixed(2)}M</span></td>
+                        <td>${(p.actual / 1000000).toFixed(2)}M</td>
+                        <td>${(p.commitment / 1000000).toFixed(2)}M</td>
+                        <td><strong>${(p.total / 1000000).toFixed(2)}M</strong></td>
+                        <td><strong>${utilization}%</strong></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        // Export functionality
+        function exportReport() {
+            alert('Export functionality would generate a comprehensive PDF report with all charts and tables.');
+        }
+
+        // Initialize dashboard
+        window.onload = function() {
+            updateMetrics();
+            createStatusChart();
+            createRiskChart();
+            createModTypeChart();
+            createPlantChart();
+            createBudgetChart();
+            createHighRiskProjectsChart();
+            createRiskCategoryChart();
+            createPriorityRiskChart();
+            populateRiskTable();
+            populateDecisions();
+            createCancelledCostChart();
+            createCancelledRiskChart();
+            createCostAnalysisChart();
+            createCostPriorityChart();
+            createEfficiencyChart();
+            populateCostTable();
+        };
+    </script>
+</body>
+</html>
